@@ -1,5 +1,5 @@
-import { getNextStaticProps, is404 } from '@faustjs/next';
-import { client } from 'client';
+import { gql } from '@apollo/client';
+import { initializeApollo, addApolloState } from 'client';
 import {
   ContentWrapper,
   Footer,
@@ -9,34 +9,48 @@ import {
   SEO,
   TaxonomyTerms,
 } from 'components';
+import { FEATURED_IMAGE_PARTS } from 'components/FeaturedImage/FeaturedImage';
 import { pageTitle } from 'utils';
 
-export function PostComponent({ post }) {
-  const { useQuery } = client;
-  const generalSettings = useQuery().generalSettings;
+export const POST_QUERY = gql`
+  query Page($id: ID!) {
+    generalSettings {
+      title
+    }
+    post(id: $id, idType: URI) {
+      title
+      content
+      author {
+        node {
+          name
+        }
+      }
+      date
+      ...FeaturedImageParts
+    }
+  }
+  ${FEATURED_IMAGE_PARTS}
+`;
 
+export default function Page({ generalSettings, post }) {
   return (
     <>
       <SEO
-        title={pageTitle(
-          generalSettings,
-          post?.title(),
-          generalSettings?.title
-        )}
-        imageUrl={post?.featuredImage?.node?.sourceUrl?.()}
+        title={pageTitle(generalSettings, post?.title, generalSettings?.title)}
+        imageUrl={post?.featuredImage?.node?.sourceUrl}
       />
 
       <Header />
 
       <Main>
         <EntryHeader
-          title={post?.title()}
+          title={post?.title}
           date={post?.date}
           author={post?.author?.node?.name}
           image={post?.featuredImage?.node}
         />
         <div className="container">
-          <ContentWrapper content={post?.content()}>
+          <ContentWrapper content={post?.content}>
             <TaxonomyTerms post={post} taxonomy={'categories'} />
             <TaxonomyTerms post={post} taxonomy={'tags'} />
           </ContentWrapper>
@@ -48,18 +62,21 @@ export function PostComponent({ post }) {
   );
 }
 
-export default function Page() {
-  const { usePost } = client;
-  const post = usePost();
-
-  return <PostComponent post={post} />;
-}
-
 export async function getStaticProps(context) {
-  return getNextStaticProps(context, {
-    Page,
-    client,
-    notFound: await is404(context, { client }),
+  const apolloClient = initializeApollo();
+  const { data } = await apolloClient.query({
+    query: POST_QUERY,
+    variables: {
+      id: '/posts/' + context?.params?.postSlug,
+    },
+  });
+
+  return addApolloState(apolloClient, {
+    props: {
+      generalSettings: data?.generalSettings,
+      post: data?.post,
+    },
+    notFound: !data || !data.post,
   });
 }
 

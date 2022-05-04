@@ -1,10 +1,32 @@
 import React from 'react';
+import { gql } from '@apollo/client';
 import Link from 'next/link';
 import { Heading, FeaturedImage, PostInfo } from 'components';
 import appConfig from 'app.config';
 import useFocusFirstNewResult from 'hooks/useFocusFirstNewResult';
+import { FEATURED_IMAGE_PARTS } from 'components/FeaturedImage/FeaturedImage';
 
 import styles from './Posts.module.scss';
+
+export const POSTS_COMPONENT = gql`
+  ${FEATURED_IMAGE_PARTS}
+  fragment PostsComponent on RootQuery {
+    posts(first: $first) {
+      nodes {
+        id
+        ...FeaturedImageParts
+        uri
+        title
+        author {
+          node {
+            name
+          }
+        }
+        date
+      }
+    }
+  }
+`;
 
 /**
  * Renders a list of Post items
@@ -15,8 +37,9 @@ import styles from './Posts.module.scss';
  * @returns {React.ReactElement} The Projects component
  */
 function Posts({ posts, intro, id }) {
-  const { firstNewResultRef, firstNewResultIndex } =
-    useFocusFirstNewResult(posts);
+  const { firstNewResultRef, firstNewResultIndex } = useFocusFirstNewResult(
+    posts
+  );
 
   return (
     // eslint-disable-next-line react/jsx-props-no-spreading
@@ -55,7 +78,7 @@ function Posts({ posts, intro, id }) {
                 <Heading level="h4" className={styles.header}>
                   <Link href={post?.uri ?? '#'}>
                     <a ref={isFirstNewResult ? firstNewResultRef : null}>
-                      {post.title()}
+                      {post.title}
                     </a>
                   </Link>
                 </Heading>

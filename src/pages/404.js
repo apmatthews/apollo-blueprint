@@ -1,20 +1,26 @@
-import { getNextStaticProps } from '@faustjs/next';
-import { client } from 'client';
+import { gql } from '@apollo/client';
+import { initializeApollo, addApolloState } from 'client';
 import { Button, Footer, Header, EntryHeader, Main, SEO } from 'components';
 import { useRouter } from 'next/router';
 import React, { useState } from 'react';
 import { pageTitle } from 'utils';
 import styles from 'styles/pages/_404.module.scss';
 
-export default function Page() {
-  const { useQuery } = client;
-  const generalSettings = useQuery().generalSettings;
+export const SETTINGS_QUERY = gql`
+  query Settings {
+    generalSettings {
+      title
+    }
+  }
+`;
+
+export default function Page({ generalSettings }) {
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState('');
 
   return (
     <>
-      <SEO title={pageTitle(generalSettings)} />
+      <SEO title={pageTitle(generalSettings, generalSettings.title)} />
 
       <Header />
 
@@ -62,9 +68,15 @@ export default function Page() {
   );
 }
 
-export async function getStaticProps(context) {
-  return getNextStaticProps(context, {
-    Page,
-    client,
+export async function getStaticProps() {
+  const apolloClient = initializeApollo();
+  const { data } = await apolloClient.query({
+    query: SETTINGS_QUERY,
+  });
+
+  return addApolloState(apolloClient, {
+    props: {
+      generalSettings: data?.generalSettings,
+    },
   });
 }

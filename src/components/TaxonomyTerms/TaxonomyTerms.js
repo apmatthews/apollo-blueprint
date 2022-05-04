@@ -20,7 +20,7 @@ export default function TaxonomyTerms({ post, taxonomy }) {
     );
   });
 
-  if (0 === termLinks.length) {
+  if (!termLinks || 0 === termLinks.length) {
     return null;
   }
 

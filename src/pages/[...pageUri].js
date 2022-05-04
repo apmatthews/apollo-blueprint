@@ -1,5 +1,5 @@
-import { getNextStaticProps, is404 } from '@faustjs/next';
-import { client } from 'client';
+import { gql } from '@apollo/client';
+import { initializeApollo, addApolloState } from 'client';
 import {
   Header,
   EntryHeader,
@@ -8,49 +8,57 @@ import {
   Main,
   SEO,
 } from 'components';
+import { FEATURED_IMAGE_PARTS } from 'components/FeaturedImage/FeaturedImage';
 import { pageTitle } from 'utils';
 
-export function PageComponent({ page }) {
-  const { useQuery } = client;
-  const generalSettings = useQuery().generalSettings;
+export const PAGE_QUERY = gql`
+  query Page($id: ID!) {
+    generalSettings {
+      title
+    }
+    page(id: $id, idType: URI) {
+      title
+      content
+      ...FeaturedImageParts
+    }
+  }
+  ${FEATURED_IMAGE_PARTS}
+`;
 
+export default function Page({ generalSettings, page }) {
   return (
     <>
       <SEO
-        title={pageTitle(
-          generalSettings,
-          page?.title(),
-          generalSettings?.title
-        )}
-        imageUrl={page?.featuredImage?.node?.sourceUrl?.()}
+        title={pageTitle(generalSettings, page?.title)}
+        imageUrl={page?.featuredImage?.node?.sourceUrl}
       />
-
       <Header />
-
       <Main>
-        <EntryHeader title={page?.title()} image={page?.featuredImage?.node} />
+        <EntryHeader title={page?.title} image={page?.featuredImage?.node} />
         <div className="container">
-          <ContentWrapper content={page?.content()} />
+          <ContentWrapper content={page?.content} />
         </div>
       </Main>
-
       <Footer />
     </>
   );
 }
 
-export default function Page() {
-  const { usePage } = client;
-  const page = usePage();
-
-  return <PageComponent page={page} />;
-}
-
 export async function getStaticProps(context) {
-  return getNextStaticProps(context, {
-    Page,
-    client,
-    notFound: await is404(context, { client }),
+  const apolloClient = initializeApollo();
+  const { data } = await apolloClient.query({
+    query: PAGE_QUERY,
+    variables: {
+      id: '/' + context?.params?.pageUri,
+    },
+  });
+
+  return addApolloState(apolloClient, {
+    props: {
+      generalSettings: data?.generalSettings,
+      page: data?.page,
+    },
+    notFound: !data || !data.page,
   });
 }
 

@@ -1,5 +1,5 @@
-import { getNextStaticProps } from '@faustjs/next';
-import { client } from 'client';
+import { gql } from '@apollo/client';
+import { initializeApollo, addApolloState } from 'client';
 import {
   Button,
   Footer,
@@ -10,23 +10,29 @@ import {
   SearchResults,
   SEO,
 } from 'components';
-import useSearch from 'hooks/useSearch';
+// import useSearch from 'hooks/useSearch';
 import React from 'react';
 import styles from 'styles/pages/_Search.module.scss';
 import { pageTitle } from 'utils';
 
-export default function Page() {
-  const { useQuery } = client;
-  const generalSettings = useQuery().generalSettings;
-  const {
-    searchQuery,
-    setSearchQuery,
-    searchResults,
-    loadMore,
-    isLoading,
-    pageInfo,
-    error,
-  } = useSearch();
+export const SETTINGS_QUERY = gql`
+  query Settings {
+    generalSettings {
+      title
+    }
+  }
+`;
+
+export default function Page({ generalSettings }) {
+  // const {
+  //   searchQuery,
+  //   setSearchQuery,
+  //   searchResults,
+  //   loadMore,
+  //   isLoading,
+  //   pageInfo,
+  //   error,
+  // } = useSearch();
 
   return (
     <>
@@ -35,7 +41,8 @@ export default function Page() {
       <Header />
 
       <Main>
-        <div className={styles['search-header-pane']}>
+        <h1>TODO: Search</h1>
+        {/* <div className={styles['search-header-pane']}>
           <div className="container small">
             <h2 className={styles['search-header-text']}>
               {searchQuery && !isLoading
@@ -47,8 +54,8 @@ export default function Page() {
               onChange={(newValue) => setSearchQuery(newValue)}
             />
           </div>
-        </div>
-        <div className="container small">
+        </div> */}
+        {/* <div className="container small">
           {error && (
             <div className="alert-error">
               An error has occurred. Please refresh and try again.
@@ -64,7 +71,7 @@ export default function Page() {
           )}
 
           {!isLoading && searchResults === null && <SearchRecommendations />}
-        </div>
+        </div> */}
       </Main>
 
       <Footer />
@@ -72,9 +79,15 @@ export default function Page() {
   );
 }
 
-export async function getStaticProps(context) {
-  return getNextStaticProps(context, {
-    Page,
-    client,
+export async function getStaticProps() {
+  const apolloClient = initializeApollo();
+  const { data } = await apolloClient.query({
+    query: SETTINGS_QUERY,
+  });
+
+  return addApolloState(apolloClient, {
+    props: {
+      generalSettings: data?.generalSettings,
+    },
   });
 }

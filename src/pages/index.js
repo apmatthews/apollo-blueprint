@@ -1,6 +1,8 @@
-import { getNextStaticProps } from '@faustjs/next';
+import * as MENUS from 'constants/menus';
+
 import React from 'react';
-import { client } from 'client';
+import { gql } from '@apollo/client';
+import { initializeApollo, addApolloState } from 'client';
 import { FaArrowRight } from 'react-icons/fa';
 import {
   Posts,
@@ -15,18 +17,42 @@ import {
 } from 'components';
 import styles from 'styles/pages/_Home.module.scss';
 import { pageTitle } from 'utils';
+import { POSTS_COMPONENT } from 'components/Posts/Posts';
+import { NAVIGATION_MENU_ITEM } from 'components/NavigationMenu/NavigationMenu';
 
 const postsPerPage = 3;
 
-export default function Page() {
-  const { useQuery, usePosts } = client;
-  const generalSettings = useQuery().generalSettings;
-  const posts = usePosts({
-    first: postsPerPage,
-    where: {
-      categoryName: 'uncategorized',
-    },
-  });
+const HOME_QUERY = gql`
+  query Home(
+    $first: Int!
+    $primaryMenu: MenuLocationEnum
+    $footerMenu: MenuLocationEnum
+  ) {
+    generalSettings {
+      title
+    }
+    ...PostsComponent
+    primaryMenu: menuItems(where: { location: $primaryMenu }) {
+      nodes {
+        ...NavigationMenuItem
+      }
+    }
+    footerMenu: menuItems(where: { location: $footerMenu }) {
+      nodes {
+        ...NavigationMenuItem
+      }
+    }
+  }
+  ${POSTS_COMPONENT}
+  ${NAVIGATION_MENU_ITEM}
+`;
+
+export default function Page({
+  generalSettings,
+  primaryMenu,
+  footerMenu,
+  posts,
+}) {
   const mainBanner = {
     sourceUrl: '/static/banner.jpeg',
     mediaDetails: { width: 1200, height: 600 },
@@ -40,7 +66,7 @@ export default function Page() {
         imageUrl={mainBanner?.sourceUrl}
       />
 
-      <Header />
+      <Header menuItems={primaryMenu} />
 
       <Main className={styles.home}>
         <EntryHeader image={mainBanner} />
@@ -99,14 +125,28 @@ export default function Page() {
         </div>
       </Main>
 
-      <Footer />
+      <Footer menuItems={footerMenu} />
     </>
   );
 }
 
-export async function getStaticProps(context) {
-  return getNextStaticProps(context, {
-    Page,
-    client,
+export async function getStaticProps() {
+  const apolloClient = initializeApollo();
+  const { data } = await apolloClient.query({
+    query: HOME_QUERY,
+    variables: {
+      first: postsPerPage,
+      primaryMenu: MENUS.PRIMARY_LOCATION,
+      footerMenu: MENUS.FOOTER_LOCATION,
+    },
+  });
+
+  return addApolloState(apolloClient, {
+    props: {
+      generalSettings: data?.generalSettings || [],
+      posts: data?.posts || [],
+      primaryMenu: data?.primaryMenu?.nodes || [],
+      footerMenu: data?.footerMenu?.nodes || [],
+    },
   });
 }

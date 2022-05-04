@@ -1,8 +1,6 @@
-const { withFaust } = require('@faustjs/next');
 const WP_HOST = new URL(process.env.NEXT_PUBLIC_WORDPRESS_URL).hostname;
 
-/** @type {import('next').NextConfig} */
-const nextConfig = {
+module.exports = {
   reactStrictMode: true,
   sassOptions: {
     includePaths: ['node_modules'],
@@ -18,5 +16,3 @@ const nextConfig = {
     defaultLocale: 'en',
   },
 };
-
-module.exports = withFaust(nextConfig);

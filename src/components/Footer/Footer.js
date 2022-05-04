@@ -1,5 +1,3 @@
-import * as MENUS from 'constants/menus';
-
 import appConfig from 'app.config';
 import {
   FaFacebookF,
@@ -17,7 +15,7 @@ import styles from './Footer.module.scss';
  * The Blueprint's Footer component
  * @return {React.ReactElement} The Footer component.
  */
-export default function Footer() {
+export default function Footer({ menuItems }) {
   return (
     <footer className={styles.footer}>
       <div className="container">
@@ -123,10 +121,7 @@ export default function Footer() {
           </div>
         )}
 
-        <NavigationMenu
-          className={styles.nav}
-          menuLocation={MENUS.FOOTER_LOCATION}
-        />
+        <NavigationMenu className={styles.nav} menuItems={menuItems} />
 
         <div className={styles.copyright}>
           &copy; {new Date().getFullYear()} Blueprint Media &#183; Powered By{' '}
