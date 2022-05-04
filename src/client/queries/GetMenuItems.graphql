@@ -1,0 +1,9 @@
+#import "../fragments/NavigationMenuItems.graphql"
+
+query GetMenuItems($location: MenuLocationEnum) {
+  menuItems(where: { location: $location }) {
+    nodes {
+      ...NavigationMenuItems
+    }
+  }
+}

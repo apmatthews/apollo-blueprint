@@ -1,0 +1,10 @@
+fragment NavigationMenuItems on MenuItem {
+  id
+  path
+  label
+  menu {
+    node {
+      name
+    }
+  }
+}

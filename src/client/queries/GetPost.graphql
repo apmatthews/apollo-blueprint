@@ -1,0 +1,15 @@
+#import "../fragments/FeaturedImage.graphql"
+
+query GetPost($id: ID!, $idType: PostIdType) {
+  post(id: $id, idType: $idType) {
+    title
+    content
+    author {
+      node {
+        name
+      }
+    }
+    date
+    ...FeaturedImage
+  }
+}

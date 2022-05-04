@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { NavigationMenu, SkipNavigationLink } from 'components';
 
 import styles from './Header.module.scss';
+
 /**
  * A Header component
  * @param {Props} props The props object.

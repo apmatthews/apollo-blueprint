@@ -1,4 +1,5 @@
-import { gql } from '@apollo/client';
+import * as MENUS from 'constants/menus';
+
 import { initializeApollo, addApolloState } from 'client';
 import {
   Button,
@@ -14,16 +15,10 @@ import {
 import React from 'react';
 import styles from 'styles/pages/_Search.module.scss';
 import { pageTitle } from 'utils';
+import GetGeneralSettings from 'client/queries/GetGeneralSettings.graphql';
+import GetMenuItems from 'client/queries/GetMenuItems.graphql';
 
-export const SETTINGS_QUERY = gql`
-  query Settings {
-    generalSettings {
-      title
-    }
-  }
-`;
-
-export default function Page({ generalSettings }) {
+export default function Page({ generalSettings, primaryMenu, footerMenu }) {
   // const {
   //   searchQuery,
   //   setSearchQuery,
@@ -38,7 +33,7 @@ export default function Page({ generalSettings }) {
     <>
       <SEO title={pageTitle(generalSettings, 'Search')} />
 
-      <Header />
+      <Header menuItems={primaryMenu} />
 
       <Main>
         <h1>TODO: Search</h1>
@@ -74,20 +69,36 @@ export default function Page({ generalSettings }) {
         </div> */}
       </Main>
 
-      <Footer />
+      <Footer menuItems={footerMenu} />
     </>
   );
 }
 
 export async function getStaticProps() {
   const apolloClient = initializeApollo();
-  const { data } = await apolloClient.query({
-    query: SETTINGS_QUERY,
+  const { data: generalSettingsData } = await apolloClient.query({
+    query: GetGeneralSettings,
+  });
+
+  const { data: primaryMenuData } = await apolloClient.query({
+    query: GetMenuItems,
+    variables: {
+      location: MENUS.PRIMARY_LOCATION,
+    },
+  });
+
+  const { data: footerMenuData } = await apolloClient.query({
+    query: GetMenuItems,
+    variables: {
+      location: MENUS.FOOTER_LOCATION,
+    },
   });
 
   return addApolloState(apolloClient, {
     props: {
-      generalSettings: data?.generalSettings,
+      generalSettings: generalSettingsData?.generalSettings || [],
+      primaryMenu: primaryMenuData?.menuItems.nodes || [],
+      footerMenu: footerMenuData?.menuItems?.nodes || [],
     },
   });
 }

@@ -1,18 +1,4 @@
-import { gql } from '@apollo/client';
 import Link from 'next/link';
-
-export const NAVIGATION_MENU_ITEM = gql`
-  fragment NavigationMenuItem on MenuItem {
-    id
-    path
-    label
-    menu {
-      node {
-        name
-      }
-    }
-  }
-`;
 
 /**
  * A navigation menu component.

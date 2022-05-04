@@ -1,0 +1,18 @@
+#import "../fragments/FeaturedImage.graphql"
+
+query GetPosts($first: Int) {
+  posts(first: $first) {
+    nodes {
+      id
+      ...FeaturedImage
+      uri
+      title
+      author {
+        node {
+          name
+        }
+      }
+      date
+    }
+  }
+}

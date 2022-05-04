@@ -1,22 +1,5 @@
 import Image from 'next/image';
 import { classNames as cn } from 'utils';
-import { gql } from '@apollo/client';
-
-export const FEATURED_IMAGE_PARTS = gql`
-  fragment FeaturedImageParts on NodeWithFeaturedImage {
-    featuredImage {
-      node {
-        id
-        sourceUrl
-        altText
-        mediaDetails {
-          width
-          height
-        }
-      }
-    }
-  }
-`;
 
 import styles from './FeaturedImage.module.scss';
 /**

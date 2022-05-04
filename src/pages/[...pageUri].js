@@ -1,4 +1,5 @@
-import { gql } from '@apollo/client';
+import * as MENUS from 'constants/menus';
+
 import { initializeApollo, addApolloState } from 'client';
 import {
   Header,
@@ -8,57 +9,71 @@ import {
   Main,
   SEO,
 } from 'components';
-import { FEATURED_IMAGE_PARTS } from 'components/FeaturedImage/FeaturedImage';
 import { pageTitle } from 'utils';
+import GetGeneralSettings from 'client/queries/GetGeneralSettings.graphql';
+import GetMenuItems from 'client/queries/GetMenuItems.graphql';
+import GetPage from 'client/queries/GetPage.graphql';
 
-export const PAGE_QUERY = gql`
-  query Page($id: ID!) {
-    generalSettings {
-      title
-    }
-    page(id: $id, idType: URI) {
-      title
-      content
-      ...FeaturedImageParts
-    }
-  }
-  ${FEATURED_IMAGE_PARTS}
-`;
-
-export default function Page({ generalSettings, page }) {
+export default function Page({
+  generalSettings,
+  primaryMenu,
+  footerMenu,
+  page,
+}) {
   return (
     <>
       <SEO
         title={pageTitle(generalSettings, page?.title)}
         imageUrl={page?.featuredImage?.node?.sourceUrl}
       />
-      <Header />
+      <Header menuItems={primaryMenu} />
       <Main>
         <EntryHeader title={page?.title} image={page?.featuredImage?.node} />
         <div className="container">
           <ContentWrapper content={page?.content} />
         </div>
       </Main>
-      <Footer />
+      <Footer menuItems={footerMenu} />
     </>
   );
 }
 
 export async function getStaticProps(context) {
   const apolloClient = initializeApollo();
-  const { data } = await apolloClient.query({
-    query: PAGE_QUERY,
+  const { data: pageData } = await apolloClient.query({
+    query: GetPage,
     variables: {
       id: '/' + context?.params?.pageUri,
+      idType: 'URI',
+    },
+  });
+
+  const { data: generalSettingsData } = await apolloClient.query({
+    query: GetGeneralSettings,
+  });
+
+  const { data: primaryMenuData } = await apolloClient.query({
+    query: GetMenuItems,
+    variables: {
+      location: MENUS.PRIMARY_LOCATION,
+    },
+  });
+
+  const { data: footerMenuData } = await apolloClient.query({
+    query: GetMenuItems,
+    variables: {
+      location: MENUS.FOOTER_LOCATION,
     },
   });
 
   return addApolloState(apolloClient, {
     props: {
-      generalSettings: data?.generalSettings,
-      page: data?.page,
+      generalSettings: generalSettingsData?.generalSettings,
+      primaryMenu: primaryMenuData?.menuItems?.nodes || [],
+      footerMenu: footerMenuData?.menuItems?.nodes || [],
+      page: pageData?.page,
     },
-    notFound: !data || !data.page,
+    notFound: !pageData || !pageData.page,
   });
 }
 
