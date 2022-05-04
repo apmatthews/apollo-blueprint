@@ -1,18 +1,19 @@
-import { getNextStaticProps, is404 } from '@faustjs/next';
+import * as MENUS from 'constants/menus';
+
 import Link from 'next/link';
-import { client } from 'client';
+import { initializeApollo, addApolloState } from 'client';
 import { Footer, Header, EntryHeader, Main, SEO } from 'components';
 import { pageTitle } from 'utils';
+import GetGeneralSettings from 'client/queries/GetGeneralSettings.graphql';
+import GetMenuItems from 'client/queries/GetMenuItems.graphql';
+import GetCategories from 'client/queries/GetCategories.graphql';
 
-export default function Page() {
-  const { useQuery } = client;
-  const generalSettings = useQuery().generalSettings;
-  const categories = useQuery()?.categories();
-
-  if (useQuery().$state.isLoading) {
-    return null;
-  }
-
+export default function Page({
+  generalSettings,
+  primaryMenu,
+  footerMenu,
+  categories,
+}) {
   return (
     <>
       <SEO
@@ -23,7 +24,7 @@ export default function Page() {
         )}
       />
 
-      <Header />
+      <Header menuItems={primaryMenu} />
 
       <Main>
         <EntryHeader title="All Categories" />
@@ -31,7 +32,7 @@ export default function Page() {
           <div className="content">
             <h1>All Categories</h1>
             <ul>
-              {categories?.nodes?.map(({ id, name, uri }) => {
+              {categories?.map(({ id, name, uri }) => {
                 return (
                   <li key={id}>
                     {
@@ -47,15 +48,41 @@ export default function Page() {
         </div>
       </Main>
 
-      <Footer />
+      <Footer menuItems={footerMenu} />
     </>
   );
 }
 
-export async function getStaticProps(context) {
-  return getNextStaticProps(context, {
-    Page,
-    client,
-    notFound: await is404(context, { client }),
+export async function getStaticProps() {
+  const apolloClient = initializeApollo();
+  const { data: categoriesData } = await apolloClient.query({
+    query: GetCategories,
+  });
+
+  const { data: generalSettingsData } = await apolloClient.query({
+    query: GetGeneralSettings,
+  });
+
+  const { data: primaryMenuData } = await apolloClient.query({
+    query: GetMenuItems,
+    variables: {
+      location: MENUS.PRIMARY_LOCATION,
+    },
+  });
+
+  const { data: footerMenuData } = await apolloClient.query({
+    query: GetMenuItems,
+    variables: {
+      location: MENUS.FOOTER_LOCATION,
+    },
+  });
+
+  return addApolloState(apolloClient, {
+    props: {
+      generalSettings: generalSettingsData?.generalSettings,
+      primaryMenu: primaryMenuData?.menuItems?.nodes || [],
+      footerMenu: footerMenuData?.menuItems?.nodes || [],
+      categories: categoriesData?.categories.nodes || [],
+    },
   });
 }
