@@ -63,7 +63,7 @@ export default function Page({
 export async function getStaticProps(context) {
   const apolloClient = initializeApollo();
   // hydrate apollo cache with first page of posts
-  const { data: postsData } = await apolloClient.query({
+  await apolloClient.query({
     query: GetPosts,
     variables: {
       first: appConfig.postsPerPage,
