@@ -24,6 +24,7 @@ function createApolloClient() {
           queryType: true,
           fields: {
             posts: relayStylePagination(),
+            contentNodes: relayStylePagination(),
           },
         },
       },
