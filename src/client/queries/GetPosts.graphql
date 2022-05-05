@@ -1,18 +1,26 @@
 #import "../fragments/FeaturedImage.graphql"
 
-query GetPosts($first: Int) {
-  posts(first: $first) {
-    nodes {
-      id
-      ...FeaturedImage
-      uri
-      title
-      author {
-        node {
-          name
+query GetPosts($first: Int, $after: String, $category: String) {
+  posts(first: $first, after: $after, where: { categoryName: $category }) {
+    edges {
+      node {
+        id
+        ...FeaturedImage
+        uri
+        title
+        author {
+          node {
+            name
+          }
         }
+        date
       }
-      date
+    }
+    pageInfo {
+      hasNextPage
+      hasPreviousPage
+      startCursor
+      endCursor
     }
   }
 }

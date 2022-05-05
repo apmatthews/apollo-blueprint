@@ -1,0 +1,6 @@
+query GetCategory($id: ID!, $idType: CategoryIdType!) {
+  category(id: $id, idType: $idType) {
+    name
+    slug
+  }
+}

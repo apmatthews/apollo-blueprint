@@ -28,8 +28,10 @@ export default function LoadMore({
           disabled={isLoading}
           onClick={() => {
             fetchMore({
-              first: appConfig.postsPerPage,
-              after: endCursor,
+              variables: {
+                first: appConfig.postsPerPage,
+                after: endCursor,
+              },
             });
           }}
         >

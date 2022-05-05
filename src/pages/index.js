@@ -81,7 +81,7 @@ export default function Page({
             <Heading className={styles.heading} level="h2">
               Latest Posts
             </Heading>
-            <Posts posts={posts?.nodes} id="posts-list" />
+            <Posts posts={posts} id="posts-list" />
           </section>
           <section className="cta">
             <CTA
@@ -137,7 +137,7 @@ export async function getStaticProps() {
       generalSettings: generalSettingsData?.generalSettings,
       primaryMenu: primaryMenuData?.menuItems.nodes || [],
       footerMenu: footerMenuData?.menuItems?.nodes || [],
-      posts: postsData?.posts || [],
+      posts: postsData?.posts?.edges?.map(({ node }) => node) || [],
     },
   });
 }
