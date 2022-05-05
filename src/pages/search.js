@@ -7,7 +7,6 @@ import {
   Header,
   Main,
   SearchInput,
-  SearchRecommendations,
   SearchResults,
   SEO,
 } from 'components';
@@ -69,7 +68,6 @@ export default function Page({ generalSettings, primaryMenu, footerMenu }) {
             <div className={styles['load-more']}>
               <Button
                 onClick={() => {
-                  console.log('hello');
                   fetchMore({
                     variables: {
                       after: data?.contentNodes?.pageInfo?.endCursor,
@@ -81,8 +79,6 @@ export default function Page({ generalSettings, primaryMenu, footerMenu }) {
               </Button>
             </div>
           )}
-
-          {/* {!isLoading && searchResults === null && <SearchRecommendations />} */}
         </div>
       </Main>
 
