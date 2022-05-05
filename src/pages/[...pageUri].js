@@ -1,5 +1,6 @@
-import { getNextStaticProps, is404 } from '@faustjs/next';
-import { client } from 'client';
+import * as MENUS from 'constants/menus';
+
+import { initializeApollo, addApolloState } from 'client';
 import {
   Header,
   EntryHeader,
@@ -9,48 +10,70 @@ import {
   SEO,
 } from 'components';
 import { pageTitle } from 'utils';
+import GetGeneralSettings from 'client/queries/GetGeneralSettings.graphql';
+import GetMenuItems from 'client/queries/GetMenuItems.graphql';
+import GetPage from 'client/queries/GetPage.graphql';
 
-export function PageComponent({ page }) {
-  const { useQuery } = client;
-  const generalSettings = useQuery().generalSettings;
-
+export default function Page({
+  generalSettings,
+  primaryMenu,
+  footerMenu,
+  page,
+}) {
   return (
     <>
       <SEO
-        title={pageTitle(
-          generalSettings,
-          page?.title(),
-          generalSettings?.title
-        )}
-        imageUrl={page?.featuredImage?.node?.sourceUrl?.()}
+        title={pageTitle(generalSettings, page?.title)}
+        imageUrl={page?.featuredImage?.node?.sourceUrl}
       />
-
-      <Header />
-
+      <Header menuItems={primaryMenu} />
       <Main>
-        <EntryHeader title={page?.title()} image={page?.featuredImage?.node} />
+        <EntryHeader title={page?.title} image={page?.featuredImage?.node} />
         <div className="container">
-          <ContentWrapper content={page?.content()} />
+          <ContentWrapper content={page?.content} />
         </div>
       </Main>
-
-      <Footer />
+      <Footer menuItems={footerMenu} />
     </>
   );
 }
 
-export default function Page() {
-  const { usePage } = client;
-  const page = usePage();
-
-  return <PageComponent page={page} />;
-}
-
 export async function getStaticProps(context) {
-  return getNextStaticProps(context, {
-    Page,
-    client,
-    notFound: await is404(context, { client }),
+  const apolloClient = initializeApollo();
+  const { data: pageData } = await apolloClient.query({
+    query: GetPage,
+    variables: {
+      id: '/' + context?.params?.pageUri,
+      idType: 'URI',
+    },
+  });
+
+  const { data: generalSettingsData } = await apolloClient.query({
+    query: GetGeneralSettings,
+  });
+
+  const { data: primaryMenuData } = await apolloClient.query({
+    query: GetMenuItems,
+    variables: {
+      location: MENUS.PRIMARY_LOCATION,
+    },
+  });
+
+  const { data: footerMenuData } = await apolloClient.query({
+    query: GetMenuItems,
+    variables: {
+      location: MENUS.FOOTER_LOCATION,
+    },
+  });
+
+  return addApolloState(apolloClient, {
+    props: {
+      generalSettings: generalSettingsData?.generalSettings,
+      primaryMenu: primaryMenuData?.menuItems?.nodes || [],
+      footerMenu: footerMenuData?.menuItems?.nodes || [],
+      page: pageData?.page,
+    },
+    notFound: !pageData || !pageData.page,
   });
 }
 

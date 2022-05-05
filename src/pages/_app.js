@@ -1,18 +1,19 @@
-import 'faust.config';
-import { FaustProvider } from '@faustjs/next';
+import { ApolloProvider } from '@apollo/client';
 import 'normalize.css/normalize.css';
 import 'styles/main.scss';
 import React from 'react';
-import { client } from 'client';
+import { useApollo } from 'client';
 import ThemeStyles from 'components/ThemeStyles/ThemeStyles';
 
 export default function MyApp({ Component, pageProps }) {
+  const apolloClient = useApollo(pageProps);
+
   return (
     <>
       <ThemeStyles />
-      <FaustProvider client={client} pageProps={pageProps}>
+      <ApolloProvider client={apolloClient}>
         <Component {...pageProps} />
-      </FaustProvider>
+      </ApolloProvider>
     </>
   );
 }

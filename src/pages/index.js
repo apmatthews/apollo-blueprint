@@ -1,6 +1,7 @@
-import { getNextStaticProps } from '@faustjs/next';
+import * as MENUS from 'constants/menus';
+
 import React from 'react';
-import { client } from 'client';
+import { initializeApollo, addApolloState } from 'client';
 import { FaArrowRight } from 'react-icons/fa';
 import {
   Posts,
@@ -15,18 +16,18 @@ import {
 } from 'components';
 import styles from 'styles/pages/_Home.module.scss';
 import { pageTitle } from 'utils';
+import GetGeneralSettings from 'client/queries/GetGeneralSettings.graphql';
+import GetMenuItems from 'client/queries/GetMenuItems.graphql';
+import GetPosts from 'client/queries/GetPosts.graphql';
 
 const postsPerPage = 3;
 
-export default function Page() {
-  const { useQuery, usePosts } = client;
-  const generalSettings = useQuery().generalSettings;
-  const posts = usePosts({
-    first: postsPerPage,
-    where: {
-      categoryName: 'uncategorized',
-    },
-  });
+export default function Page({
+  generalSettings,
+  primaryMenu,
+  footerMenu,
+  posts,
+}) {
   const mainBanner = {
     sourceUrl: '/static/banner.jpeg',
     mediaDetails: { width: 1200, height: 600 },
@@ -40,7 +41,7 @@ export default function Page() {
         imageUrl={mainBanner?.sourceUrl}
       />
 
-      <Header />
+      <Header menuItems={primaryMenu} />
 
       <Main className={styles.home}>
         <EntryHeader image={mainBanner} />
@@ -80,7 +81,7 @@ export default function Page() {
             <Heading className={styles.heading} level="h2">
               Latest Posts
             </Heading>
-            <Posts posts={posts?.nodes} id="posts-list" />
+            <Posts posts={posts} id="posts-list" />
           </section>
           <section className="cta">
             <CTA
@@ -99,14 +100,44 @@ export default function Page() {
         </div>
       </Main>
 
-      <Footer />
+      <Footer menuItems={footerMenu} />
     </>
   );
 }
 
-export async function getStaticProps(context) {
-  return getNextStaticProps(context, {
-    Page,
-    client,
+export async function getStaticProps() {
+  const apolloClient = initializeApollo();
+  const { data: postsData } = await apolloClient.query({
+    query: GetPosts,
+    variables: {
+      first: postsPerPage,
+    },
+  });
+
+  const { data: generalSettingsData } = await apolloClient.query({
+    query: GetGeneralSettings,
+  });
+
+  const { data: primaryMenuData } = await apolloClient.query({
+    query: GetMenuItems,
+    variables: {
+      location: MENUS.PRIMARY_LOCATION,
+    },
+  });
+
+  const { data: footerMenuData } = await apolloClient.query({
+    query: GetMenuItems,
+    variables: {
+      location: MENUS.FOOTER_LOCATION,
+    },
+  });
+
+  return addApolloState(apolloClient, {
+    props: {
+      generalSettings: generalSettingsData?.generalSettings,
+      primaryMenu: primaryMenuData?.menuItems.nodes || [],
+      footerMenu: footerMenuData?.menuItems?.nodes || [],
+      posts: postsData?.posts?.edges?.map(({ node }) => node) || [],
+    },
   });
 }

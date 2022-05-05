@@ -1,6 +1,9 @@
+import * as MENUS from 'constants/menus';
+
+import appConfig from 'app.config';
 import React from 'react';
-import { getNextStaticProps } from '@faustjs/next';
-import { client } from 'client';
+import { initializeApollo, addApolloState } from 'client';
+import { useQuery } from '@apollo/client';
 import {
   Posts,
   Header,
@@ -11,68 +14,79 @@ import {
   SEO,
 } from 'components';
 import { pageTitle } from 'utils';
-import useNodePagination from 'hooks/useNodePagination';
+import GetGeneralSettings from 'client/queries/GetGeneralSettings.graphql';
+import GetMenuItems from 'client/queries/GetMenuItems.graphql';
+import GetPosts from 'client/queries/GetPosts.graphql';
 
-/**
- * Prepass fields for post nodes. This lists all the pieces of data we need
- * for each project node. Running the following through `prepass` ensures that
- * all of the data is there when we need it, and no cascading requests happen.
- *
- * @see https://gqty.dev/docs/client/helper-functions#prepass
- */
-const POST_NODES_PREPASS_FIELDS = [
-  'databaseId',
-  'id',
-  '__typename',
-  'featuredImage.*',
-  'featuredImage.node.altText',
-  'featuredImage.node.mediaDetails.width',
-  'featuredImage.node.mediaDetails.height',
-  'featuredImage.node.sourceUrl',
-  'author.node.name',
-  'date',
-  'uri',
-  'title',
-  'slug',
-  'summary',
-];
-
-export default function Page() {
-  const { useQuery } = client;
-  const generalSettings = useQuery().generalSettings;
-  const { data, fetchMore, isLoading } = useNodePagination(
-    (query, queryArgs) => query.posts(queryArgs),
-    POST_NODES_PREPASS_FIELDS
-  );
+export default function Page({ generalSettings, primaryMenu, footerMenu }) {
+  const { loading, data, fetchMore } = useQuery(GetPosts, {
+    variables: {
+      after: '',
+      first: appConfig.postsPerPage,
+    },
+  });
 
   return (
     <>
       <SEO title={pageTitle(generalSettings)} />
 
-      <Header />
+      <Header menuItems={primaryMenu} />
 
       <Main>
         <EntryHeader title="Latest Posts" />
         <div className="container">
-          <Posts posts={data?.nodes} id="posts-list" />
+          <Posts
+            posts={data?.posts?.edges.map(({ node }) => node)}
+            id="posts-list"
+          />
           <LoadMore
             className="text-center"
-            hasNextPage={data?.hasNextPage}
-            endCursor={data?.endCursor}
-            isLoading={isLoading}
+            endCursor={data?.posts?.pageInfo?.endCursor}
+            hasNextPage={data?.posts?.pageInfo?.hasNextPage}
+            isLoading={loading}
             fetchMore={fetchMore}
           />
         </div>
       </Main>
 
-      <Footer />
+      <Footer menuItems={footerMenu} />
     </>
   );
 }
 
-export async function getStaticProps(context) {
-  return getNextStaticProps(context, {
-    Page,
-    client,
+export async function getStaticProps() {
+  const apolloClient = initializeApollo();
+  const { data: postsData } = await apolloClient.query({
+    query: GetPosts,
+    variables: {
+      first: appConfig.postsPerPage,
+    },
+  });
+
+  const { data: generalSettingsData } = await apolloClient.query({
+    query: GetGeneralSettings,
+  });
+
+  const { data: primaryMenuData } = await apolloClient.query({
+    query: GetMenuItems,
+    variables: {
+      location: MENUS.PRIMARY_LOCATION,
+    },
+  });
+
+  const { data: footerMenuData } = await apolloClient.query({
+    query: GetMenuItems,
+    variables: {
+      location: MENUS.FOOTER_LOCATION,
+    },
+  });
+
+  return addApolloState(apolloClient, {
+    props: {
+      generalSettings: generalSettingsData?.generalSettings,
+      primaryMenu: primaryMenuData?.menuItems?.nodes || [],
+      footerMenu: footerMenuData?.menuItems?.nodes || [],
+      posts: postsData?.posts || [],
+    },
   });
 }

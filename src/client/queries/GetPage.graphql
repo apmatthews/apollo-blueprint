@@ -1,0 +1,9 @@
+#import "../fragments/FeaturedImage.graphql"
+
+query GetPage($id: ID!, $idType: PageIdType!) {
+  page(id: $id, idType: $idType) {
+    title
+    content
+    ...FeaturedImage
+  }
+}

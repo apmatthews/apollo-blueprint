@@ -15,8 +15,9 @@ import styles from './Posts.module.scss';
  * @returns {React.ReactElement} The Projects component
  */
 function Posts({ posts, intro, id }) {
-  const { firstNewResultRef, firstNewResultIndex } =
-    useFocusFirstNewResult(posts);
+  const { firstNewResultRef, firstNewResultIndex } = useFocusFirstNewResult(
+    posts
+  );
 
   return (
     // eslint-disable-next-line react/jsx-props-no-spreading
@@ -55,7 +56,7 @@ function Posts({ posts, intro, id }) {
                 <Heading level="h4" className={styles.header}>
                   <Link href={post?.uri ?? '#'}>
                     <a ref={isFirstNewResult ? firstNewResultRef : null}>
-                      {post.title()}
+                      {post.title}
                     </a>
                   </Link>
                 </Heading>

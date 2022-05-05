@@ -1,8 +1,6 @@
-const { withFaust } = require('@faustjs/next');
 const WP_HOST = new URL(process.env.NEXT_PUBLIC_WORDPRESS_URL).hostname;
 
-/** @type {import('next').NextConfig} */
-const nextConfig = {
+module.exports = {
   reactStrictMode: true,
   sassOptions: {
     includePaths: ['node_modules'],
@@ -17,6 +15,15 @@ const nextConfig = {
     locales: ['en'],
     defaultLocale: 'en',
   },
+  webpack: (config) => {
+    config.module.rules.push({
+      test: /\.(graphql|gql)$/,
+      exclude: /node_modules/,
+      loader: 'graphql-tag/loader',
+    });
+    return config;
+  },
+  webpackDevMiddleware: (config) => {
+    return config;
+  },
 };
-
-module.exports = withFaust(nextConfig);

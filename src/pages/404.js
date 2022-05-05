@@ -1,22 +1,23 @@
-import { getNextStaticProps } from '@faustjs/next';
-import { client } from 'client';
+import * as MENUS from 'constants/menus';
+
+import { initializeApollo, addApolloState } from 'client';
 import { Button, Footer, Header, EntryHeader, Main, SEO } from 'components';
 import { useRouter } from 'next/router';
 import React, { useState } from 'react';
 import { pageTitle } from 'utils';
 import styles from 'styles/pages/_404.module.scss';
+import GetGeneralSettings from 'client/queries/GetGeneralSettings.graphql';
+import GetMenuItems from 'client/queries/GetMenuItems.graphql';
 
-export default function Page() {
-  const { useQuery } = client;
-  const generalSettings = useQuery().generalSettings;
+export default function Page({ generalSettings, primaryMenu, footerMenu }) {
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState('');
 
   return (
     <>
-      <SEO title={pageTitle(generalSettings)} />
+      <SEO title={pageTitle(generalSettings, generalSettings.title)} />
 
-      <Header />
+      <Header menuItems={primaryMenu} />
 
       <Main>
         <EntryHeader title="Not found, error 404" />
@@ -57,14 +58,36 @@ export default function Page() {
         </div>
       </Main>
 
-      <Footer />
+      <Footer menuItems={footerMenu} />
     </>
   );
 }
 
-export async function getStaticProps(context) {
-  return getNextStaticProps(context, {
-    Page,
-    client,
+export async function getStaticProps() {
+  const apolloClient = initializeApollo();
+  const { data: generalSettingsData } = await apolloClient.query({
+    query: GetGeneralSettings,
+  });
+
+  const { data: primaryMenuData } = await apolloClient.query({
+    query: GetMenuItems,
+    variables: {
+      location: MENUS.PRIMARY_LOCATION,
+    },
+  });
+
+  const { data: footerMenuData } = await apolloClient.query({
+    query: GetMenuItems,
+    variables: {
+      location: MENUS.FOOTER_LOCATION,
+    },
+  });
+
+  return addApolloState(apolloClient, {
+    props: {
+      generalSettings: generalSettingsData?.generalSettings,
+      primaryMenu: primaryMenuData?.menuItems?.nodes || [],
+      footerMenu: footerMenuData?.menuItems?.nodes || [],
+    },
   });
 }

@@ -34,9 +34,7 @@ export default function SearchResults({ searchResults, isLoading }) {
         <div key={node?.databaseId ?? ''} className={styles.result}>
           <Link href={node?.uri}>
             <a>
-              <h2 className={styles.title}>
-                {node?.$on?.[node?.__typename].title?.()}
-              </h2>
+              <h2 className={styles.title}>{node.title}</h2>
             </a>
           </Link>
           <div className={styles.meta}>
@@ -46,7 +44,7 @@ export default function SearchResults({ searchResults, isLoading }) {
           </div>
           <div
             dangerouslySetInnerHTML={{
-              __html: node?.$on?.[node?.__typename]?.excerpt?.(),
+              __html: node.excerpt,
             }}
           ></div>
         </div>
