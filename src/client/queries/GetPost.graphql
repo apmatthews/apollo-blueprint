@@ -4,6 +4,18 @@ query GetPost($id: ID!, $idType: PostIdType) {
   post(id: $id, idType: $idType) {
     title
     content
+    categories {
+      nodes {
+        name
+        uri
+      }
+    }
+    tags {
+      nodes {
+        name
+        uri
+      }
+    }
     author {
       node {
         name

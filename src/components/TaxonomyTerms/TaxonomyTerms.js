@@ -9,8 +9,8 @@ import styles from './TaxonomyTerms.module.scss';
  * @returns {React.ReactElement} The TaxonomyTerms component
  */
 export default function TaxonomyTerms({ post, taxonomy }) {
-  const termLinks = post?.[taxonomy]?.()?.edges.map((edge, index) => {
-    const { name, uri } = edge.node;
+  const termLinks = post?.[taxonomy]?.nodes?.map((node, index) => {
+    const { name, uri } = node;
     return (
       uri && (
         <Link key={index} href={uri}>
